@@ -5,6 +5,10 @@ defmodule KV do
   def start(_type, _args) do
     port = Application.fetch_env!(:kv, :port)
 
+    for node <- Application.fetch_env!(:kv, :nodes) do
+      Node.connect(node)
+    end
+
     children = [
       {Registry, name: KV, keys: :unique},
       {DynamicSupervisor, name: KV.BucketSupervisor, strategy: :one_for_one},
@@ -29,5 +33,6 @@ defmodule KV do
     GenServer.whereis(via(name))
   end
 
-  defp via(name), do: {:via, Registry, {KV, name}}
+  # defp via(name), do: {:via, Registry, {KV, name}}
+  defp via(name), do: {:global, name}
 end
