@@ -22,6 +22,9 @@ defmodule KV.Command do
       iex> KV.Command.parse "SUBSCRIBE shopping\r\n"
       {:ok, {:subscribe, "shopping"}}
 
+      iex> KV.Command.parse "COUNT SUBSCRIBERS shopping\r\n"
+      {:ok, {:count_subscribers, "shopping"}}
+
   Unknown commands or commands with the wrong number of
   arguments return an error:
 
@@ -40,6 +43,7 @@ defmodule KV.Command do
       ["PUT", bucket, key, value] -> {:ok, {:put, bucket, key, value}}
       ["DELETE", bucket, key] -> {:ok, {:delete, bucket, key}}
       ["SUBSCRIBE", bucket] -> {:ok, {:subscribe, bucket}}
+      ["COUNT", "SUBSCRIBERS", bucket] -> {:ok, {:count_subscribers, bucket}}
       _ -> {:error, :unknown_command}
     end
   end
@@ -84,6 +88,14 @@ defmodule KV.Command do
       KV.Bucket.subscribe(pid)
       :inet.setopts(socket, active: true)
       receive_messages(socket)
+    end)
+  end
+
+  def run({:count_subscribers, bucket}, socket) do
+    lookup(bucket, fn pid ->
+      count = KV.Bucket.count_subscribers(pid)
+      :gen_tcp.send(socket, "subscribers: #{count}")
+      :ok
     end)
   end
 

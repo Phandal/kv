@@ -39,6 +39,13 @@ defmodule KV.Bucket do
     GenServer.cast(bucket, {:subscribe, self()})
   end
 
+  @doc """
+  Counts the number of subscribers on `bucket`.
+  """
+  def count_subscribers(bucket) do
+    GenServer.call(bucket, {:count_subscribers})
+  end
+
   ## Callbacks
 
   @impl GenServer
@@ -69,6 +76,12 @@ defmodule KV.Bucket do
     {value, state} = pop_in(state.bucket[key])
     broadcast(state, {:delete, key})
     {:reply, value, state}
+  end
+
+  @impl GenServer
+  def handle_call({:count_subscribers}, _from, state) do
+    count = MapSet.size(state.subscribers)
+    {:reply, count, state}
   end
 
   @impl GenServer
