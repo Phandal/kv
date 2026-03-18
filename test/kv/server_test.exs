@@ -50,6 +50,16 @@ defmodule KV.ServerTest do
     assert :gen_tcp.recv(socket, 0, 1000) == {:ok, "milk DELETED\r\n"}
   end
 
+  test "counts subscribers on buckets", %{socket: socket, name: name} do
+    assert send_and_recv(socket, "CREATE #{name}\r\n") == "OK\r\n"
+    :gen_tcp.send(socket, "SUBSCRIBE #{name}\r\n")
+
+    {:ok, other} = :gen_tcp.connect(~c"localhost", 4040, @socket_options)
+
+    assert send_and_recv(other, "COUNT SUBSCRIBERS #{name}\r\n") == "subscribers: 1\r\n"
+    assert send_and_recv(other, "") == "OK\r\n"
+  end
+
   defp send_and_recv(socket, command) do
     :ok = :gen_tcp.send(socket, command)
     {:ok, data} = :gen_tcp.recv(socket, 0, 1000)
