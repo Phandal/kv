@@ -94,7 +94,7 @@ defmodule KV.Command do
   def run({:count_subscribers, bucket}, socket) do
     lookup(bucket, fn pid ->
       count = KV.Bucket.count_subscribers(pid)
-      :gen_tcp.send(socket, "subscribers: #{count}")
+      :gen_tcp.send(socket, "subscribers: #{count}\r\n")
       :ok
     end)
   end
